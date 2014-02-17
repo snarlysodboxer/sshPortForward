@@ -1,4 +1,4 @@
-package main
+package sshPortForward
 
 // Forward from local port 9000 to remote port 9999
 
@@ -8,13 +8,6 @@ import (
 	"log"
 	"net"
   "io/ioutil"
-)
-
-var (
-	username         = "root"
-	serverAddrString = "192.168.1.100:22"
-	localAddrString  = "localhost:9000"
-	remoteAddrString = "localhost:9999"
 )
 
 type keyChain struct {
@@ -79,7 +72,14 @@ func forward(localConn net.Conn, config *ssh.ClientConfig) {
 	}()
 }
 
-func main() {
+var (
+	username         = "root"
+	serverAddrString = "192.168.1.100:22"
+	localAddrString  = "localhost:9000"
+	remoteAddrString = "localhost:9999"
+)
+
+func ConnectAndForward(username, serverAddrString, localAddrString, remoteAddrString string) {
   // Load id_rsa file
   keychain := new(keyChain)
   err := keychain.loadPEM("/home/myuser/.ssh/id_rsa")
