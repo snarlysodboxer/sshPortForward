@@ -1,7 +1,5 @@
 package sshPortForward
 
-// Forward from local port 9000 to remote port 9999
-
 import (
 	"code.google.com/p/go.crypto/ssh"
 	"io"
@@ -42,18 +40,20 @@ func (keychain *keyChain) loadPEM(file string) error {
   return nil
 }
 
-func forward(localConn net.Conn, config *ssh.ClientConfig) {
+func forward(localConn net.Conn, config *ssh.ClientConfig, serverAddrString, remoteAddrString string) {
 	// Setup sshClientConn (type *ssh.ClientConn)
 	sshClientConn, err := ssh.Dial("tcp", serverAddrString, config)
 	if err != nil {
 		log.Fatalf("ssh.Dial failed: %s", err)
 	}
+  defer sshClientConn.Close()
 
 	// Setup sshConn (type net.Conn)
 	sshConn, err := sshClientConn.Dial("tcp", remoteAddrString)
 	if err != nil {
 		log.Fatalf("sshClientConn.Dial failed: %s", err)
 	}
+  defer sshConn.Close()
 
 	// Copy localConn.Reader to sshConn.Writer
 	go func() {
@@ -72,17 +72,10 @@ func forward(localConn net.Conn, config *ssh.ClientConfig) {
 	}()
 }
 
-var (
-	userNameString   = "root"
-	serverAddrString = "192.168.1.100:22"
-	localAddrString  = "localhost:9000"
-	remoteAddrString = "localhost:9999"
-)
-
-func ConnectAndForward(userNameString, serverAddrString, localAddrString, remoteAddrString string) {
+func ConnectAndForward(userNameString, serverAddrString, localAddrString, remoteAddrString, privateKeyPathString string) error {
   // Load id_rsa file
   keychain := new(keyChain)
-  err := keychain.loadPEM("/home/myuser/.ssh/id_rsa")
+  err := keychain.loadPEM(privateKeyPathString)
   if err != nil {
     log.Fatalf("Cannot load key: %v", err)
   }
@@ -100,6 +93,7 @@ func ConnectAndForward(userNameString, serverAddrString, localAddrString, remote
 	if err != nil {
 		log.Fatalf("net.Listen failed: %v", err)
 	}
+  defer localListener.Close()
 
 	for {
 		// Setup localConn (type net.Conn)
@@ -107,6 +101,8 @@ func ConnectAndForward(userNameString, serverAddrString, localAddrString, remote
 		if err != nil {
 			log.Fatalf("listen.Accept failed: %v", err)
 		}
-		go forward(localConn, config)
+    defer localConn.Close()
+		go forward(localConn, config, serverAddrString, remoteAddrString)
 	}
+  return err
 }
