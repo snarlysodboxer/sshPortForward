@@ -72,24 +72,32 @@ func forward(localConn net.Conn, config *ssh.ClientConfig, serverAddrString, rem
 	}()
 }
 
-func ConnectAndForward(userNameString, serverAddrString, localAddrString, remoteAddrString, privateKeyPathString string) error {
+type Addresses struct {
+  SSHUserString         string
+  ServerAddrString      string
+  RemoteAddrString      string
+  LocalAddrString       string
+  PrivateKeyPathString  string
+}
+
+func ConnectAndForward(addresses Addresses) error {
   // Load id_rsa file
   keychain := new(keyChain)
-  err := keychain.loadPEM(privateKeyPathString)
+  err := keychain.loadPEM(addresses.PrivateKeyPathString)
   if err != nil {
     log.Fatalf("Cannot load key: %v", err)
   }
 
 	// Setup SSH config (type *ssh.ClientConfig)
 	config := &ssh.ClientConfig{
-		User: userNameString,
+		User: addresses.SSHUserString,
 		Auth: []ssh.ClientAuth{
 			ssh.ClientAuthKeyring(keychain),
 		},
 	}
 
 	// Setup localListener (type net.Listener)
-	localListener, err := net.Listen("tcp", localAddrString)
+	localListener, err := net.Listen("tcp", addresses.LocalAddrString)
 	if err != nil {
 		log.Fatalf("net.Listen failed: %v", err)
 	}
@@ -102,7 +110,7 @@ func ConnectAndForward(userNameString, serverAddrString, localAddrString, remote
 			log.Fatalf("listen.Accept failed: %v", err)
 		}
     defer localConn.Close()
-		go forward(localConn, config, serverAddrString, remoteAddrString)
+		go forward(localConn, config, addresses.ServerAddrString, addresses.RemoteAddrString)
 	}
   return err
 }
