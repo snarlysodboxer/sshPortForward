@@ -7,7 +7,4 @@ Usage:
 
 `import "github.com/snarlysodboxer/sshPortForward"`
 
-    connection, err := sshPortForward.ConnectAndForward(userNameString serverAddrString localAddrString remoteAddrString privateKeyPathString)
-    if err != nil {
-      // Do something
-    }
+    sshPortForward.ConnectAndForward(userNameString serverAddrString localAddrString remoteAddrString privateKeyPathString)

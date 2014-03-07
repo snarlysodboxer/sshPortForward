@@ -46,20 +46,20 @@ func forward(localConn net.Conn, config *ssh.ClientConfig, serverAddrString, rem
 	if err != nil {
 		log.Fatalf("ssh.Dial failed: %s", err)
 	}
-  defer sshClientConn.Close()
+  //defer sshClientConn.Close()
 
 	// Setup sshConn (type net.Conn)
 	sshConn, err := sshClientConn.Dial("tcp", remoteAddrString)
 	if err != nil {
 		log.Fatalf("sshClientConn.Dial failed: %s", err)
 	}
-  defer sshConn.Close()
+  //defer sshConn.Close()
 
 	// Copy localConn.Reader to sshConn.Writer
 	go func() {
 		_, err = io.Copy(sshConn, localConn)
 		if err != nil {
-			log.Fatalf("io.Copy failed: %v", err)
+			log.Printf("io.Copy from local to remote failed: %v", err)
 		}
 	}()
 
@@ -67,7 +67,7 @@ func forward(localConn net.Conn, config *ssh.ClientConfig, serverAddrString, rem
 	go func() {
 		_, err = io.Copy(localConn, sshConn)
 		if err != nil {
-			log.Fatalf("io.Copy failed: %v", err)
+			log.Printf("io.Copy from remote to local failed: %v", err)
 		}
 	}()
 }
@@ -80,7 +80,7 @@ type Addresses struct {
   PrivateKeyPathString  string
 }
 
-func ConnectAndForward(addresses Addresses) error {
+func ConnectAndForward(addresses Addresses) {
   // Load id_rsa file
   keychain := new(keyChain)
   err := keychain.loadPEM(addresses.PrivateKeyPathString)
@@ -112,5 +112,4 @@ func ConnectAndForward(addresses Addresses) error {
     defer localConn.Close()
 		go forward(localConn, config, addresses.ServerAddrString, addresses.RemoteAddrString)
 	}
-  return err
 }
