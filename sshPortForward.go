@@ -8,6 +8,14 @@ import (
   "io/ioutil"
 )
 
+type Addresses struct {
+  SSHUserString         string
+  ServerAddrString      string
+  RemoteAddrString      string
+  LocalAddrString       string
+  PrivateKeyPathString  string
+}
+
 type keyChain struct {
   keys []ssh.Signer
 }
@@ -70,14 +78,6 @@ func forward(localConn net.Conn, config *ssh.ClientConfig, serverAddrString, rem
 			log.Printf("io.Copy from remote to local failed: %v", err)
 		}
 	}()
-}
-
-type Addresses struct {
-  SSHUserString         string
-  ServerAddrString      string
-  RemoteAddrString      string
-  LocalAddrString       string
-  PrivateKeyPathString  string
 }
 
 func ConnectAndForward(addresses Addresses) {
