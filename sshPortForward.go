@@ -52,14 +52,16 @@ func forward(localConn net.Conn, config *ssh.ClientConfig, serverAddrString, rem
 	// Setup sshClientConn (type *ssh.ClientConn)
 	sshClientConn, err := ssh.Dial("tcp", serverAddrString, config)
 	if err != nil {
-		log.Fatalf("ssh.Dial failed: %s", err)
+		log.Printf("ssh.Dial failed: %s", err)
+    return
 	}
   //defer sshClientConn.Close()
 
 	// Setup sshConn (type net.Conn)
 	sshConn, err := sshClientConn.Dial("tcp", remoteAddrString)
 	if err != nil {
-		log.Fatalf("sshClientConn.Dial failed: %s", err)
+		log.Printf("sshClientConn.Dial failed: %s", err)
+    return
 	}
   //defer sshConn.Close()
 
@@ -99,7 +101,9 @@ func ConnectAndForward(addresses Addresses) {
 	// Setup localListener (type net.Listener)
 	localListener, err := net.Listen("tcp", addresses.LocalAddrString)
 	if err != nil {
-		log.Fatalf("net.Listen failed: %v", err)
+		log.Printf("net.Listen failed: %v", err)
+    // Don't setup a connection where one already exists:
+    return
 	}
   defer localListener.Close()
 
@@ -107,7 +111,7 @@ func ConnectAndForward(addresses Addresses) {
 		// Setup localConn (type net.Conn)
 		localConn, err := localListener.Accept()
 		if err != nil {
-			log.Fatalf("listen.Accept failed: %v", err)
+			log.Printf("listen.Accept failed: %v", err)
 		}
     defer localConn.Close()
 		go forward(localConn, config, addresses.ServerAddrString, addresses.RemoteAddrString)
